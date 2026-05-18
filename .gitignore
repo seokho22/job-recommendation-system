@@ -1,7 +1,15 @@
+# Python 가상환경
 venv/
 .venv/
 env/
 
-*.json
+# 환경변수 파일
+.env
 
+# 수집 데이터 및 로컬 DB
+*.json
+data/
+chroma_db/
+
+# IDE 설정
 .idea/
