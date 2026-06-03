@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-import time # 서버 차단을 막기 위한 휴식용 라이브러리 추가
+import time
+from tqdm import tqdm  # 진행 상황을 표시하기 위한 라이브러리 추가
 
 def get_position_details(position_id):
     """특정 공고 ID의 상세 정보를 HTML 파싱하여 반환합니다."""
@@ -12,7 +13,6 @@ def get_position_details(position_id):
 
     response = requests.get(url, headers=headers)
 
-    # 기본값 세팅 (페이지가 없거나 에러가 날 경우 빈 문자열 반환)
     details = {
         "주요업무": "",
         "자격요건": "",
@@ -40,37 +40,33 @@ def get_position_details(position_id):
 
     return details
 
-def crawl_and_merge_jumpit_jobs(page=1):
-    """API 목록 데이터와 상세 데이터를 병합하여 최종 JSON으로 저장합니다."""
+def crawl_jumpit_jobs_by_page(page=1):
+    """특정 페이지의 API 목록 데이터와 상세 데이터를 병합한 리스트를 반환합니다."""
     url = f"https://jumpit-api.saramin.co.kr/api/positions?sort=reg_dt&highlight=false&page={page}"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json"
     }
 
-    print(f"📊 {page}페이지 목록 데이터 수집 시작...")
     response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
         print(f"❌ API 호출 에러 발생: {response.status_code}")
-        return
+        return None
 
     data = response.json()
     positions = data.get('result', {}).get('positions', [])
 
     if not positions:
-        print("수집할 공고가 없습니다.")
-        return
+        print(f"ℹ️ {page}페이지에 더 이상 수집할 공고가 없습니다.")
+        return []
 
-    merged_data_list = []
-    total_count = len(positions)
+    page_data_list = []
 
-    # 리스트에 있는 각 공고들을 하나씩 순회합니다.
-    for idx, pos in enumerate(positions):
+    # 🌟 tqdm 적용 부분: 기존의 print 문을 제거하고 for문에 tqdm을 씌워줍니다.
+    for pos in tqdm(positions, desc=f"⏳ {page}페이지 공고 수집", unit="개", ncols=80):
         job_id = pos.get('id')
-        print(f"[{idx+1}/{total_count}] 공고 ID {job_id} 병합 중...")
 
-        # 1. API 리스트에서 필요한 데이터만 추출
         basic_info = {
             "id": job_id,
             "jobCategory": pos.get("jobCategory", ""),
@@ -83,25 +79,42 @@ def crawl_and_merge_jumpit_jobs(page=1):
             "closedAt": pos.get("closedAt", "")
         }
 
-        # 2. 해당 ID의 상세 페이지 파싱 데이터 가져오기
         details_info = get_position_details(job_id)
-
-        # 3. 기본 정보와 상세 정보를 하나의 딕셔너리로 합치기 (Python Dictionary Unpacking 활용)
         merged_info = {**basic_info, **details_info}
-        merged_data_list.append(merged_info)
+        page_data_list.append(merged_info)
 
-        # ⚠️ 아주 중요: 짧은 시간에 너무 많은 상세 페이지를 요청하면 IP가 차단될 수 있습니다.
-        # 공고 1개를 수집할 때마다 0.5초씩 쉬어줍니다.
         time.sleep(0.5)
 
-        # 4. 최종 병합된 리스트를 JSON 파일로 저장
-    filename = f"jumpit_final_data_page{page}.json"
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(merged_data_list, f, ensure_ascii=False, indent=4)
+    return page_data_list
 
-    print(f"\n✅ 데이터 수집 및 병합 완료! [{filename}] 파일이 생성되었습니다.")
-
-# 실행
+# 실행부
 if __name__ == "__main__":
-    # 1페이지 데이터 병합 실행
-    crawl_and_merge_jumpit_jobs(page=1)
+    current_page = 1
+    all_merged_jobs = []
+
+    print("🚀 전체 데이터 크롤링을 시작합니다...\n")
+
+    while True:
+        # 1. 해당 페이지 데이터 가져오기 (이 안에서 tqdm 바가 작동합니다)
+        page_jobs = crawl_jumpit_jobs_by_page(page=current_page)
+
+        if page_jobs is None or len(page_jobs) == 0:
+            print("\n🏁 모든 데이터 수집이 완료되었습니다. 저장을 시작합니다.")
+            break
+
+        # 2. 전체 리스트에 현재 페이지 데이터 누적하기
+        all_merged_jobs.extend(page_jobs)
+        print(f"✔️ {current_page}페이지 완료! 현재까지 누적된 총 공고 수: {len(all_merged_jobs)}개\n")
+
+        # 3. 다음 페이지로 변경 및 페이지 간 휴식
+        current_page += 1
+        time.sleep(2)
+
+    # 4. JSON 파일로 통합 저장
+    if all_merged_jobs:
+        filename = "jumpit_all_pages_combined.json"
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(all_merged_jobs, f, ensure_ascii=False, indent=4)
+        print(f"✅ [성공] 총 {len(all_merged_jobs)}개의 공고 데이터가 [{filename}] 파일로 통합 저장되었습니다.")
+    else:
+        print("❌ 수집된 데이터가 없어 파일을 생성하지 않았습니다.")

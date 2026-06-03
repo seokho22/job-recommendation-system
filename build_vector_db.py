@@ -18,14 +18,27 @@ collection = client.get_or_create_collection(
 )
 
 # 3. JSON 데이터 불러오기
-with open('./clawler/jumpit_final_data_page1.json', 'r', encoding='utf-8') as f:
+with open('./clawler/jumpit_all_pages_combined.json', 'r', encoding='utf-8') as f:
     jobs = json.load(f)
+
+# ==========================================
+# ID 중복 제거 로직
+# ==========================================
+print(f"불러온 원본 데이터: {len(jobs)}개")
+unique_jobs_dict = {}
+
+for job in jobs:
+    # 딕셔너리의 키(Key)로 공고 ID를 사용하면, 중복된 ID가 나올 때 자동으로 덮어써서 1개만 남습니다.
+    unique_jobs_dict[job['id']] = job
+
+# 딕셔너리의 값들만 다시 리스트로 변환하여 jobs 변수 덮어쓰기
+jobs = list(unique_jobs_dict.values())
+print(f"🧹 중복 제거 완료! 최종 임베딩 대상 데이터: {len(jobs)}개")
+# ==========================================
 
 documents = []  # 임베딩할 실제 텍스트 내용
 metadatas = []  # 검색 결과로 보여줄 추가 정보
 ids = []        # 각 데이터의 고유 ID
-
-print(f"총 {len(jobs)}개의 공고 데이터를 벡터화 준비 중...")
 
 # 4. 데이터를 벡터 DB 구조에 맞게 가공
 for job in jobs:

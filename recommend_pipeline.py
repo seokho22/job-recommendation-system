@@ -38,11 +38,7 @@ class ResumeProfile(BaseModel):
 def parse_resume_with_llm(raw_text):
     # .env 파일의 환경 변수를 메모리로 로드합니다.
     load_dotenv()
-
-    api_key = os.getenv("SECRET_API_KEY")
-    """정제되지 않은 이력서 텍스트를 GPT-4o mini를 통해 구조화된 JSON 객체로 변환합니다."""
-    # 환경변수에 등록된 OPENAI_API_KEY를 자동으로 가져옵니다.
-    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    client = OpenAI()
 
     print("🧠 GPT-4o mini가 이력서 정보를 분석하고 구조화하는 중...")
 
