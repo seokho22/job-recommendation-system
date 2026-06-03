@@ -84,10 +84,10 @@ def search_similar_jobs(resume_profile, chroma_path="./chroma_db"):
     print(search_query)
     print("-" * 40)
 
-    # 유사도 대조 검색 실행 (상위 3개 추출)
+    # 유사도 대조 검색 실행 (상위 5개 추출)
     results = collection.query(
         query_texts=[search_query],
-        n_results=3
+        n_results=5
     )
     return results
 
