@@ -95,34 +95,48 @@ def search_similar_jobs(resume_profile, chroma_path="./chroma_db"):
 # 전체 파이프라인 실행 테스트
 # ==========================================
 if __name__ == "__main__":
-    # 테스트용 이력서 PDF 파일 경로
-    my_resume_pdf = "./data/my_resume.pdf"
+    # 처리할 이력서 PDF 파일 경로들을 리스트로 선언합니다.
+    # 원하는 만큼 파일 명을 여기에 추가해주세요.
+    resume_pdf_list = [
+        "./data/54026718.pdf",
+        "./data/54044277.pdf",
+        "./data/54062490.pdf",
+        "./data/54063145.pdf",
+        "./data/54063149.pdf",
+    ]
 
-    # 1단계: PDF에서 텍스트 추출
-    print("1. 이력서 PDF 파일 읽는 중...")
-    extracted_text = extract_text_from_pdf(my_resume_pdf)
+    for pdf_path in resume_pdf_list:
+        print(f"\n{'='*70}")
+        print(f"🚀 파일 분석 시작: {pdf_path}")
+        print(f"{'='*70}")
 
-    if extracted_text:
-        # 2단계: LLM을 이용해 정형 JSON 데이터로 가공
-        print("\n2. 가공되지 않은 텍스트를 LLM 구조화 데이터로 변환 중...")
-        structured_resume = parse_resume_with_llm(extracted_text)
+        # 1단계: PDF에서 텍스트 추출
+        print("1. 이력서 PDF 파일 읽는 중...")
+        extracted_text = extract_text_from_pdf(pdf_path)
 
-        # 가공된 데이터 확인해보기
-        print("\n✨ 추출된 구조화 JSON 데이터 결과:")
-        print(structured_resume.model_dump_json(indent=4))
+        if extracted_text:
+            # 2단계: LLM을 이용해 정형 JSON 데이터로 가공
+            print("\n2. 가공되지 않은 텍스트를 LLM 구조화 데이터로 변환 중...")
+            structured_resume = parse_resume_with_llm(extracted_text)
 
-        # 3단계 & 4단계: 가공된 데이터를 바탕으로 벡터 DB에서 맞춤 공고 조회
-        print("\n3. 벡터 DB 내 채용공고 유사도 비교 매칭 시작...")
-        recommend_results = search_similar_jobs(structured_resume)
+            # 가공된 데이터 확인해보기
+            print("\n✨ 추출된 구조화 JSON 데이터 결과:")
+            print(structured_resume.model_dump_json(indent=4))
 
-        # 최종 추천된 결과 화면에 출력하기
-        print("\n🏆 [당신에게 딱 맞는 점핏 맞춤 공고 추천 결과] 🏆")
-        print("=" * 60)
-        for i in range(len(recommend_results['ids'][0])):
-            distance = recommend_results['distances'][0][i]
-            meta = recommend_results['metadatas'][0][i]
+            # 3단계 & 4단계: 가공된 데이터를 바탕으로 벡터 DB에서 맞춤 공고 조회
+            print("\n3. 벡터 DB 내 채용공고 유사도 비교 매칭 시작...")
+            recommend_results = search_similar_jobs(structured_resume)
 
-            print(f"[{i+1}순위 추천] {meta['companyName']} - {meta['title']}")
-            print(f"   - 매칭 유사도 거리 계수: {distance:.4f}")
-            print(f"   - 공고 바로가기 링크: {meta['url']}")
+            # 최종 추천된 결과 화면에 출력하기
+            print("\n🏆 [당신에게 딱 맞는 점핏 맞춤 공고 추천 결과] 🏆")
             print("-" * 60)
+            for i in range(len(recommend_results['ids'][0])):
+                distance = recommend_results['distances'][0][i]
+                meta = recommend_results['metadatas'][0][i]
+
+                print(f"[{i+1}순위 추천] {meta['companyName']} - {meta['title']}")
+                print(f"   - 매칭 유사도 거리 계수: {distance:.4f}")
+                print(f"   - 공고 바로가기 링크: {meta['url']}")
+                print("-" * 60)
+        else:
+            print(f"\n⚠️ 해당 파일을 처리할 수 없거나 비어있습니다. 다음 파일로 넘어갑니다.")
