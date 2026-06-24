@@ -8,7 +8,7 @@ env/
 
 # 수집 데이터 및 로컬 DB
 *.json
-data/
+# data/
 chroma_db/
 
 # IDE 설정

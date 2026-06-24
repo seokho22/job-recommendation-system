@@ -99,10 +99,10 @@ if __name__ == "__main__":
     # 원하는 만큼 파일 명을 여기에 추가해주세요.
     resume_pdf_list = [
         "./data/54026718.pdf",
-        "./data/54044277.pdf",
-        "./data/54062490.pdf",
-        "./data/54063145.pdf",
-        "./data/54063149.pdf",
+        # "./data/54044277.pdf",
+        # "./data/54062490.pdf",
+        # "./data/54063145.pdf",
+        # "./data/54063149.pdf",
     ]
 
     for pdf_path in resume_pdf_list:
