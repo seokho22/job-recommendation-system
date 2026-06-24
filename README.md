@@ -20,16 +20,16 @@
 
 ## 2. 시작 가이드 (Installation & Running)
 
-### 5-1. 요구 사항 및 기술 스택
+### 2-1. 요구 사항 및 기술 스택
 * **Language**: Python 3.10+
 * **Framework/Libraries**: OpenAI API, ChromaDB, PyMuPDF (fitz), Beautifulsoup4, SentenceTransformers
 
-### 5-2. 환경 변수 설정 (`.env`)
+### 2-2. 환경 변수 설정 (`.env`)
 프로젝트 루트 디렉토리에 `.env` 파일을 생성하고 OpenAI API 키를 입력합니다.
 ```env
 OPENAI_API_KEY=your_openai_api_key_here
 ```
-### 5-3. 실행 방법
+### 2-3. 실행 방법
 ```Bash
 # 1. 의존성 라이브러리 설치
 pip install -r requirements.txt
